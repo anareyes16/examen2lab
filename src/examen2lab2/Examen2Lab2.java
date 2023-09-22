@@ -9,12 +9,14 @@ package examen2lab2;
  * @author Ana Reyes
  */
 public class Examen2Lab2 {
+ 
 
+    
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
+       
     }
     
 }
