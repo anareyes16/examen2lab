@@ -14,8 +14,11 @@ import java.util.Map;
  * @author Ana Reyes
  */
 public class FileManager {
-
-    private RandomAccessFile RAF;
+    
+    
+    
+    
+     private RandomAccessFile RAF;
     private Map<String, User> users;
 
     public FileManager(String filename) throws IOException {

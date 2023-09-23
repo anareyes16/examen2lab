@@ -10,7 +10,8 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 
 public class PSNUsers {
- private RandomAccessFile raf;
+
+    private RandomAccessFile raf;
     private Hashtable<String, User> users;
 
     public PSNUsers(String fileName) throws IOException {
@@ -25,7 +26,7 @@ public class PSNUsers {
             long position = raf.getFilePointer();
             String username = raf.readUTF();
             boolean isActive = raf.readBoolean();
-            // Only add active users to the hashtable
+
             if (isActive) {
                 users.put(username, new User(username, position));
             }
@@ -34,7 +35,7 @@ public class PSNUsers {
 
     public void addUser(String username) throws IOException {
         if (users.containsKey(username)) {
-            System.out.println("Usuario ya existe.");
+            System.out.println("Usuario Existente.");
             return;
         }
 
@@ -43,22 +44,25 @@ public class PSNUsers {
         raf.writeUTF(username);
         raf.writeBoolean(true);
 
-        // Update the hashtable
         users.put(username, new User(username, position));
     }
 
-    public void deactivateUser(String username) throws IOException {
+    public void deactivateUser(String username) {
         User user = users.get(username);
         if (user == null) {
-            System.out.println("Usuario no encontrado.");
+            System.out.println("Usuario no existente");
             return;
         }
 
-        raf.seek(user.getPos());
-        raf.writeBoolean(false); 
-
-       
-        users.remove(username);
+        try {
+            long position = user.getPos();
+            raf.seek(position);
+            raf.writeBoolean(false);
+            users.remove(username);
+            System.out.println("Se desactivó el usuario con éxito.");
+        } catch (IOException ex) {
+            System.out.println("ERROR");
+        }
     }
 
     public void addTrophyTo(String username, String trophyGame, String trophyName, Trophy type) throws IOException {
@@ -68,7 +72,6 @@ public class PSNUsers {
             return;
         }
 
-       
         try (RandomAccessFile trophiesRaf = new RandomAccessFile("psn_trophies.dat", "rw")) {
             trophiesRaf.seek(trophiesRaf.length());
             trophiesRaf.writeLong(user.getPos());
@@ -76,5 +79,27 @@ public class PSNUsers {
             trophiesRaf.writeUTF(trophyGame);
             trophiesRaf.writeUTF(trophyName);
         }
-    }}
+    }
+    
+    public void playerInfo(String username) throws IOException {
+    User user = users.get(username);
+    if (user == null) {
+        System.out.println("Usuario no encontrado.");
+        return;
+    }
 
+    System.out.println("Datos del usuario:");
+    System.out.println("Nombre de usuario: " + user.getUsername());
+    System.out.println("Puntos acumulados: " + user.getTrophyPoints());
+ 
+
+    System.out.println("\nTrofeos del usuario:");
+    try (RandomAccessFile trophiesRaf = new RandomAccessFile("psn_trophies.dat", "rw")) {
+        trophiesRaf.seek(0);
+        while (trophiesRaf.getFilePointer() < trophiesRaf.length()) {
+            long userPos = trophiesRaf.readLong();
+            if (userPos == user.getPos()) {
+                String trophyType = trophiesRaf.readUTF();
+                String trophyGame = trophiesRaf.readUTF();
+                String trophyDescription = trophiesRaf.readUTF();
+            }}}
