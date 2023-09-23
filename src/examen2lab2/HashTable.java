@@ -9,6 +9,7 @@ package examen2lab2;
  * @author Ana Reyes
  */
 public class HashTable {
+
     private Nodo inicio = null;
     private int size = 0;
 
@@ -70,4 +71,5 @@ public class HashTable {
         }
     }
 
+   
 }

@@ -10,109 +10,71 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 
 public class PSNUsers {
-
-    private RandomAccessFile RAF;
+ private RandomAccessFile raf;
     private Hashtable<String, User> users;
 
-    public PSNUsers(String filename) {
-        try {
-            RAF = new RandomAccessFile(filename, "rw");
-            users = new Hashtable<>();
-            reloadHashTable();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public PSNUsers(String fileName) throws IOException {
+        raf = new RandomAccessFile(fileName, "rw");
+        users = new Hashtable<>();
+        reloadHashTable();
     }
 
     private void reloadHashTable() throws IOException {
-        users.clear();
-        long fileLength = RAF.length();
-        RAF.seek(0);
-
-        while (RAF.getFilePointer() < fileLength) {
-            int code = RAF.readInt();
-            long position = RAF.getFilePointer();
-            String username = RAF.readUTF();
-            boolean isActive = RAF.readBoolean();
-
+        raf.seek(0);
+        while (raf.getFilePointer() < raf.length()) {
+            long position = raf.getFilePointer();
+            String username = raf.readUTF();
+            boolean isActive = raf.readBoolean();
+            // Only add active users to the hashtable
             if (isActive) {
-                User userData = new User(username, code);
-                users.put(username, userData);
-            } else {
-
-                RAF.seek(position);
+                users.put(username, new User(username, position));
             }
         }
     }
 
     public void addUser(String username) throws IOException {
-        try {
-
-            if (users.containsKey(username)) {
-                System.out.println("El usuario ya existe.");
-                return;
-            }
-            long currentPosition = RAF.length();
-            RAF.writeUTF(username);
-            RAF.writeBoolean(true);
-            User newUser = new User(username);
-            users.put(username, newUser);
-
-            System.out.println("Usuario agregado con éxito.");
-        } catch (IOException ex) {
-            System.out.println("Error al agregar el usuario: " + ex.getMessage());
-        }
-
-    }
-
-    void deactivateUser(String username) {
-        try {
-            long posicionEncontrado = users.search(username);
-
-            if (posicionEncontrado == -1) {
-                System.out.println("No se encontro al usuario para desactivarlo.");
-                return;
-            }
-            RAF.seek(posicionEncontrado);
-            RAF.writeBoolean(false);
-            users.remove(username);
-            System.out.println("Se deactivio el usuario con exito.");
-
-        } catch (IOException ex) {
-            System.out.println("Algo salio mal al deactivear usuario");
-        }
-    }
-    
-    public void addTrophieTo(String username, String trophyGame, String trophyName, Trophy type) {
-    try {
- 
-        long posicionEncontrado = users.search(username);
-
-       
-        if (posicionEncontrado == -1) {
-            System.out.println("No se encontró al usuario para añadir el trofeo.");
+        if (users.containsKey(username)) {
+            System.out.println("Usuario ya existe.");
             return;
         }
 
-        RAF.seek(posicionEncontrado + 1);
+        long position = raf.length();
+        raf.seek(position);
+        raf.writeUTF(username);
+        raf.writeBoolean(true);
 
- RAF.writeUTF(type.name());
-
-    
-       RAF.writeUTF(trophyGame);
-
-      
-       RAF.writeUTF(trophyName);
-
-       RAF.writeLong(System.currentTimeMillis());
-
-     
-        users.get(username).addTrophy(type, trophyGame, trophyName);
-
-     
-        System.out.println("Se añadió el trofeo con éxito.");
-    } catch (IOException ex) {
-        System.out.println("Algo salió mal al añadir el trofeo");
+        // Update the hashtable
+        users.put(username, new User(username, position));
     }
 
-}
+    public void deactivateUser(String username) throws IOException {
+        User user = users.get(username);
+        if (user == null) {
+            System.out.println("Usuario no encontrado.");
+            return;
+        }
+
+        raf.seek(user.getPos());
+        raf.writeBoolean(false); // Mark as inactive
+
+        // Remove from the hashtable
+        users.remove(username);
+    }
+
+    public void addTrophyTo(String username, String trophyGame, String trophyName, Trophy type) throws IOException {
+        User user = users.get(username);
+        if (user == null) {
+            System.out.println("Usuario no encontrado.");
+            return;
+        }
+
+        // Append trophy information to the trophies file
+        try (RandomAccessFile trophiesRaf = new RandomAccessFile("psn_trophies.dat", "rw")) {
+            trophiesRaf.seek(trophiesRaf.length());
+            trophiesRaf.writeLong(user.getPos());
+            trophiesRaf.writeUTF(type.name());
+            trophiesRaf.writeUTF(trophyGame);
+            trophiesRaf.writeUTF(trophyName);
+        }
+    }}
+
