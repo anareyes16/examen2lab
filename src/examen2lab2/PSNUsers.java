@@ -55,9 +55,9 @@ public class PSNUsers {
         }
 
         raf.seek(user.getPos());
-        raf.writeBoolean(false); // Mark as inactive
+        raf.writeBoolean(false); 
 
-        // Remove from the hashtable
+       
         users.remove(username);
     }
 
@@ -68,7 +68,7 @@ public class PSNUsers {
             return;
         }
 
-        // Append trophy information to the trophies file
+       
         try (RandomAccessFile trophiesRaf = new RandomAccessFile("psn_trophies.dat", "rw")) {
             trophiesRaf.seek(trophiesRaf.length());
             trophiesRaf.writeLong(user.getPos());
